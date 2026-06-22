@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>충북대학교기술지주 — 미팅 예약</title>
+<style>
+  :root{
+    --navy:#1a4b8c; --navy-d:#143a6e; --bg:#f5f7fb; --line:#e3e8ef;
+    --txt:#1f2937; --muted:#6b7280; --ok:#1f9d55; --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+    font-family:"Apple SD Gothic Neo","Malgun Gothic",sans-serif;line-height:1.55}
+  .wrap{max-width:920px;margin:0 auto;padding:28px 18px 60px}
+  header{text-align:center;margin-bottom:22px}
+  header .brand{color:var(--navy);font-weight:800;letter-spacing:.5px;font-size:14px}
+  header h1{margin:6px 0 4px;font-size:26px}
+  header p{margin:0;color:var(--muted);font-size:14px}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:0 4px 18px rgba(20,40,80,.05)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:760px){.grid{grid-template-columns:1fr}}
+
+  .sec{padding:20px 22px}
+  .sec h2{font-size:15px;margin:0 0 14px;color:var(--navy);
+    display:flex;align-items:center;gap:8px}
+  .sec h2 .n{background:var(--navy);color:#fff;width:22px;height:22px;border-radius:50%;
+    display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+
+  /* 방식 선택 */
+  .modes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media(max-width:560px){.modes{grid-template-columns:1fr}}
+  .mode{border:2px solid var(--line);border-radius:12px;padding:16px;cursor:pointer;
+    transition:.15s;text-align:center}
+  .mode:hover{border-color:#b8c6dd}
+  .mode.sel{border-color:var(--navy);background:#f0f5ff}
+  .mode .ico{font-size:24px}
+  .mode .t{font-weight:700;margin-top:6px}
+  .mode .d{font-size:12px;color:var(--muted);margin-top:3px}
+
+  /* 날짜 */
+  .days{display:flex;flex-wrap:wrap;gap:8px;max-height:188px;overflow:auto;padding-right:4px}
+  .day{border:1px solid var(--line);border-radius:10px;padding:9px 12px;cursor:pointer;
+    font-size:13px;min-width:84px;text-align:center;transition:.15s;background:#fff}
+  .day:hover{border-color:#b8c6dd}
+  .day.sel{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .day .dow{display:block;font-size:11px;opacity:.8}
+
+  /* 슬롯 */
+  .slots{display:flex;flex-wrap:wrap;gap:8px;min-height:44px}
+  .slot{border:1px solid var(--navy);color:var(--navy);border-radius:10px;
+    padding:9px 14px;cursor:pointer;font-size:13px;font-weight:600;background:#fff;transition:.15s}
+  .slot:hover{background:#f0f5ff}
+  .slot.sel{background:var(--navy);color:#fff}
+
+  .hint{color:var(--muted);font-size:13px}
+  .field{margin-bottom:13px}
+  .field label{display:block;font-size:13px;font-weight:600;margin-bottom:5px}
+  .field input,.field textarea{width:100%;border:1px solid var(--line);border-radius:9px;
+    padding:10px 12px;font-size:14px;font-family:inherit}
+  .field input:focus,.field textarea:focus{outline:none;border-color:var(--navy)}
+  .req{color:#e23}
+
+  .summary{background:#f0f5ff;border:1px solid #d6e2f7;border-radius:11px;padding:14px 16px;
+    font-size:13.5px;margin-bottom:14px}
+  .summary b{color:var(--navy)}
+  .summary .pend{color:var(--muted)}
+
+  .btn{width:100%;background:var(--navy);color:#fff;border:none;border-radius:11px;
+    padding:14px;font-size:15px;font-weight:700;cursor:pointer;transition:.15s}
+  .btn:hover{background:var(--navy-d)}
+  .btn:disabled{background:#9fb0cb;cursor:not-allowed}
+
+  .done{text-align:center;padding:40px 24px}
+  .done .check{font-size:54px;color:var(--ok)}
+  .done h2{margin:10px 0 6px}
+  .done .box{background:#f0f5ff;border:1px solid #d6e2f7;border-radius:12px;
+    padding:18px;margin:18px auto;max-width:460px;text-align:left;font-size:14px}
+  .done .box .k{color:var(--muted);width:64px;display:inline-block}
+  .done a{color:var(--navy);word-break:break-all}
+
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);
+    background:#222;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;
+    opacity:0;pointer-events:none;transition:.25s;z-index:50}
+  .toast.show{opacity:1}
+  .spin{display:inline-block;width:16px;height:16px;border:2px solid #fff5;
+    border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-3px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">충북대학교기술지주㈜</div>
+    <h1>미팅 사전예약</h1>
+    <p>원하시는 방식과 시간을 선택하시면, 확정 안내와 접속 링크를 메일로 보내드립니다.</p>
+  </header>
+
+  <!-- 예약 단계 -->
+  <div id="booking" class="grid">
+    <!-- 좌: 방식 + 날짜/시간 -->
+    <div class="card">
+      <div class="sec">
+        <h2><span class="n">1</span> 미팅 방식</h2>
+        <div class="modes">
+          <div class="mode" data-mode="online">
+            <div class="ico">💻</div>
+            <div class="t">온라인</div>
+            <div class="d">Google Meet 링크 자동 발송</div>
+          </div>
+          <div class="mode" data-mode="phone">
+            <div class="ico">📞</div>
+            <div class="t">전화</div>
+            <div class="d">예약 시각에 전화드립니다</div>
+          </div>
+          <div class="mode" data-mode="offline">
+            <div class="ico">🏢</div>
+            <div class="t">오프라인</div>
+            <div class="d">충북대기술지주 사무실</div>
+          </div>
+        </div>
+      </div>
+      <div class="sec" style="border-top:1px solid var(--line)">
+        <h2><span class="n">2</span> 날짜 선택</h2>
+        <div id="days" class="days"><span class="hint">불러오는 중…</span></div>
+      </div>
+      <div class="sec" style="border-top:1px solid var(--line)">
+        <h2><span class="n">3</span> 시간 선택</h2>
+        <div id="slots" class="slots"><span class="hint">먼저 날짜를 선택하세요.</span></div>
+      </div>
+    </div>
+
+    <!-- 우: 신청 정보 -->
+    <div class="card">
+      <div class="sec">
+        <h2><span class="n">4</span> 신청자 정보</h2>
+        <div id="summary" class="summary" style="display:none"></div>
+        <div class="field"><label>이름 <span class="req">*</span></label>
+          <input id="f_name" placeholder="홍길동"></div>
+        <div class="field"><label>소속/회사</label>
+          <input id="f_org" placeholder="○○기업 / ○○부서"></div>
+        <div class="field"><label>이메일 <span class="req">*</span></label>
+          <input id="f_email" type="email" placeholder="name@example.com"></div>
+        <div class="field"><label>연락처 <span id="phoneReq" class="req" style="display:none">*</span></label>
+          <input id="f_phone" placeholder="010-0000-0000"></div>
+        <div class="field"><label>미팅 안건</label>
+          <textarea id="f_topic" rows="3" placeholder="상담하고 싶으신 내용을 적어주세요."></textarea></div>
+        <button id="submit" class="btn" disabled>예약하기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 완료 화면 -->
+  <div id="done" class="card done" style="display:none">
+    <div class="check">✓</div>
+    <h2>예약이 확정되었습니다</h2>
+    <p class="hint">확정 안내 메일과 캘린더 초대장을 보내드렸습니다.</p>
+    <div id="doneBox" class="box"></div>
+    <button class="btn" style="max-width:280px;margin:auto" onclick="location.reload()">새 예약하기</button>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* ===== 설정: GAS 웹앱 배포 URL을 여기에 붙여넣으세요 ===== */
+const API_URL = "https://script.google.com/macros/s/AKfycbw6WEsJftAVB-zW1_fHuK3BH-l9dsao2OiiPNsQByFlQQgNctcwaFAzTNRNbZgS8DL_fg/exec";
+/* ==================================================== */
+
+const DOW = ['일','월','화','수','목','금','토'];
+let state = { mode:null, date:null, slot:null };
+
+const $ = s => document.querySelector(s);
+function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2600); }
+
+/* 방식 선택 */
+document.querySelectorAll('.mode').forEach(el=>{
+  el.onclick = ()=>{
+    document.querySelectorAll('.mode').forEach(m=>m.classList.remove('sel'));
+    el.classList.add('sel');
+    state.mode = el.dataset.mode;
+    $('#phoneReq').style.display = (state.mode === 'phone') ? 'inline' : 'none';
+    refreshSummary(); validate();
+  };
+});
+
+/* 날짜 목록 로드 */
+async function loadDays(){
+  try{
+    const r = await fetch(API_URL + '?action=days');
+    const j = await r.json();
+    if(!j.ok) throw new Error(j.error||'days error');
+    const box = $('#days'); box.innerHTML='';
+    if(!j.days.length){ box.innerHTML='<span class="hint">예약 가능한 날짜가 없습니다.</span>'; return; }
+    j.days.forEach(d=>{
+      const dt = new Date(d+'T00:00:00+09:00');
+      const el = document.createElement('div');
+      el.className='day';
+      el.innerHTML = `<span class="dow">${DOW[dt.getDay()]}</span>${dt.getMonth()+1}/${dt.getDate()}`;
+      el.onclick = ()=>selectDay(d, el);
+      box.appendChild(el);
+    });
+  }catch(e){ $('#days').innerHTML='<span class="hint">날짜 로드 실패. URL 설정을 확인하세요.</span>'; }
+}
+
+async function selectDay(date, el){
+  document.querySelectorAll('.day').forEach(d=>d.classList.remove('sel'));
+  el.classList.add('sel');
+  state.date = date; state.slot = null;
+  $('#slots').innerHTML = '<span class="hint">시간을 불러오는 중…</span>';
+  refreshSummary(); validate();
+  try{
+    const r = await fetch(API_URL + '?action=slots&date=' + date);
+    const j = await r.json();
+    const box = $('#slots'); box.innerHTML='';
+    if(!j.ok || !j.slots.length){ box.innerHTML='<span class="hint">이 날짜에는 가능한 시간이 없습니다.</span>'; return; }
+    j.slots.forEach(s=>{
+      const el2 = document.createElement('div');
+      el2.className='slot'; el2.textContent = s.label;
+      el2.onclick = ()=>{
+        document.querySelectorAll('.slot').forEach(x=>x.classList.remove('sel'));
+        el2.classList.add('sel');
+        state.slot = s; refreshSummary(); validate();
+      };
+      box.appendChild(el2);
+    });
+  }catch(e){ $('#slots').innerHTML='<span class="hint">시간 로드 실패.</span>'; }
+}
+
+function refreshSummary(){
+  const s = $('#summary');
+  if(state.mode && state.date && state.slot){
+    const dt = new Date(state.date+'T00:00:00+09:00');
+    s.style.display='block';
+    const modeTxt = {online:'온라인(Meet)', phone:'전화', offline:'오프라인(사무실)'}[state.mode];
+    s.innerHTML = `<b>${dt.getMonth()+1}월 ${dt.getDate()}일(${DOW[dt.getDay()]})</b> `+
+      `${state.slot.label} · <b>${modeTxt}</b>`;
+  } else { s.style.display='none'; }
+}
+
+function validate(){
+  const phoneOk = state.mode !== 'phone' || $('#f_phone').value.trim();
+  const ok = state.mode && state.date && state.slot &&
+    $('#f_name').value.trim() && /\S+@\S+\.\S+/.test($('#f_email').value.trim()) && phoneOk;
+  $('#submit').disabled = !ok;
+}
+['#f_name','#f_email','#f_org','#f_phone','#f_topic'].forEach(id=>$(id).oninput=validate);
+
+/* 제출 */
+$('#submit').onclick = async ()=>{
+  const btn = $('#submit');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> 예약 처리 중…';
+  const payload = {
+    name: $('#f_name').value.trim(),
+    org: $('#f_org').value.trim(),
+    email: $('#f_email').value.trim(),
+    phone: $('#f_phone').value.trim(),
+    topic: $('#f_topic').value.trim(),
+    mode: state.mode,
+    start: state.slot.start,
+    end: state.slot.end
+  };
+  try{
+    const r = await fetch(API_URL, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'}, // CORS preflight 회피
+      body: JSON.stringify(payload)
+    });
+    const j = await r.json();
+    if(!j.ok){ toast(j.error||'예약 실패'); btn.disabled=false; btn.textContent='예약하기'; return; }
+    showDone(j, payload);
+  }catch(e){ toast('네트워크 오류. 잠시 후 다시 시도해 주세요.'); btn.disabled=false; btn.textContent='예약하기'; }
+};
+
+function showDone(j, p){
+  $('#booking').style.display='none';
+  const box = $('#doneBox');
+  let html = `<div><span class="k">일시</span> ${j.when}</div>`;
+  html += `<div><span class="k">신청자</span> ${p.name}${p.org?' ('+p.org+')':''}</div>`;
+  if(p.mode==='online'){
+    html += `<div><span class="k">방식</span> 온라인 (Google Meet)</div>`;
+    html += `<div><span class="k">링크</span> <a href="${j.meetLink}">${j.meetLink||'메일을 확인하세요'}</a></div>`;
+  } else if(p.mode==='phone'){
+    html += `<div><span class="k">방식</span> 전화</div>`;
+    html += `<div><span class="k">안내</span> 예약 시각에 ${j.phone||p.phone} 으로 전화드리겠습니다.</div>`;
+  } else {
+    html += `<div><span class="k">방식</span> 오프라인</div>`;
+    html += `<div><span class="k">장소</span> ${j.office}</div>`;
+  }
+  box.innerHTML = html;
+  $('#done').style.display='block';
+}
+
+loadDays();
+</script>
+</body>
+</html>
