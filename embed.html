@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>충북대학교기술지주 — 미팅 예약</title>
+<style>
+  :root{
+    --navy:#1a4b8c; --navy-d:#143a6e; --bg:transparent; --line:#e3e8ef;
+    --txt:#1f2937; --muted:#6b7280; --ok:#1f9d55; --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{background:var(--bg)}
+  body{margin:0;color:var(--txt);
+    font-family:"Apple SD Gothic Neo","Malgun Gothic",sans-serif;line-height:1.55}
+  /* 임베드용: 좌우/상하 여백 최소화 */
+  .wrap{max-width:920px;margin:0 auto;padding:8px 10px 16px}
+  header{text-align:center;margin-bottom:14px}
+  header .brand{color:var(--navy);font-weight:800;letter-spacing:.5px;font-size:13px}
+  header h1{margin:4px 0 3px;font-size:21px}
+  header p{margin:0;color:var(--muted);font-size:13px}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:0 4px 18px rgba(20,40,80,.05)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:760px){.grid{grid-template-columns:1fr}}
+
+  .sec{padding:18px 20px}
+  .sec h2{font-size:15px;margin:0 0 14px;color:var(--navy);
+    display:flex;align-items:center;gap:8px}
+  .sec h2 .n{background:var(--navy);color:#fff;width:22px;height:22px;border-radius:50%;
+    display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+
+  /* 방식 선택 */
+  .modes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media(max-width:560px){.modes{grid-template-columns:1fr}}
+  .mode{border:2px solid var(--line);border-radius:12px;padding:16px;cursor:pointer;
+    transition:.15s;text-align:center}
+  .mode:hover{border-color:#b8c6dd}
+  .mode.sel{border-color:var(--navy);background:#f0f5ff}
+  .mode .ico{font-size:24px}
+  .mode .t{font-weight:700;margin-top:6px}
+  .mode .d{font-size:12px;color:var(--muted);margin-top:3px}
+
+  /* 날짜 */
+  .days{display:flex;flex-wrap:wrap;gap:8px;max-height:188px;overflow:auto;padding-right:4px}
+  .day{border:1px solid var(--line);border-radius:10px;padding:9px 12px;cursor:pointer;
+    font-size:13px;min-width:84px;text-align:center;transition:.15s;background:#fff}
+  .day:hover{border-color:#b8c6dd}
+  .day.sel{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .day .dow{display:block;font-size:11px;opacity:.8}
+
+  /* 슬롯 */
+  .slots{display:flex;flex-wrap:wrap;gap:8px;min-height:44px}
+  .slot{border:1px solid var(--navy);color:var(--navy);border-radius:10px;
+    padding:9px 14px;cursor:pointer;font-size:13px;font-weight:600;background:#fff;transition:.15s}
+  .slot:hover{background:#f0f5ff}
+  .slot.sel{background:var(--navy);color:#fff}
+
+  .hint{color:var(--muted);font-size:13px}
+  .field{margin-bottom:13px}
+  .field label{display:block;font-size:13px;font-weight:600;margin-bottom:5px}
+  .field input,.field textarea{width:100%;border:1px solid var(--line);border-radius:9px;
+    padding:10px 12px;font-size:14px;font-family:inherit}
+  .field input:focus,.field textarea:focus{outline:none;border-color:var(--navy)}
+  .req{color:#e23}
+
+  .summary{background:#f0f5ff;border:1px solid #d6e2f7;border-radius:11px;padding:14px 16px;
+    font-size:13.5px;margin-bottom:14px}
+  .summary b{color:var(--navy)}
+  .summary .pend{color:var(--muted)}
+
+  /* 개인정보 동의 */
+  .consent{border:1px solid var(--line);border-radius:11px;padding:14px 16px;margin-bottom:14px;background:#fafbfd}
+  .consent-check{display:flex;gap:9px;align-items:flex-start;cursor:pointer;font-size:14px;font-weight:600}
+  .consent-check input{margin-top:2px;width:17px;height:17px;flex:none;accent-color:var(--navy)}
+  .consent-check b{color:#e23}
+  .consent-sum{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.55}
+  .consent-sum a{color:var(--navy);cursor:pointer;font-weight:700;white-space:nowrap}
+  .pp-full{margin-top:10px;max-height:240px;overflow:auto;border:1px solid var(--line);
+    border-radius:8px;padding:12px 14px;background:#fff;font-size:11.5px;color:#444;line-height:1.65}
+  .pp-full h4{margin:13px 0 4px;font-size:12px;color:var(--navy)}
+  .pp-full h4:first-child{margin-top:0}
+  .pp-full ul{margin:4px 0;padding-left:18px}
+  .pp-full .lead{color:#666}
+
+  .btn{width:100%;background:var(--navy);color:#fff;border:none;border-radius:11px;
+    padding:14px;font-size:15px;font-weight:700;cursor:pointer;transition:.15s}
+  .btn:hover{background:var(--navy-d)}
+  .btn:disabled{background:#9fb0cb;cursor:not-allowed}
+
+  .done{text-align:center;padding:40px 24px}
+  .done .check{font-size:54px;color:var(--ok)}
+  .done h2{margin:10px 0 6px}
+  .done .box{background:#f0f5ff;border:1px solid #d6e2f7;border-radius:12px;
+    padding:18px;margin:18px auto;max-width:460px;text-align:left;font-size:14px}
+  .done .box .k{color:var(--muted);width:64px;display:inline-block}
+  .done a{color:var(--navy);word-break:break-all}
+
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);
+    background:#222;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;
+    opacity:0;pointer-events:none;transition:.25s;z-index:50}
+  .toast.show{opacity:1}
+  .spin{display:inline-block;width:16px;height:16px;border:2px solid #fff5;
+    border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-3px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">충북대학교기술지주㈜</div>
+    <h1>미팅 사전예약</h1>
+    <p>원하시는 방식과 시간을 선택하시면, 확정 안내와 접속 링크를 메일로 보내드립니다.</p>
+  </header>
+
+  <!-- 예약 단계 -->
+  <div id="booking" class="grid">
+    <!-- 좌: 방식 + 날짜/시간 -->
+    <div class="card">
+      <div class="sec">
+        <h2><span class="n">1</span> 미팅 방식</h2>
+        <div class="modes">
+          <div class="mode" data-mode="online">
+            <div class="ico">💻</div>
+            <div class="t">온라인</div>
+            <div class="d">Google Meet 링크 자동 발송</div>
+          </div>
+          <div class="mode" data-mode="phone">
+            <div class="ico">📞</div>
+            <div class="t">전화</div>
+            <div class="d">예약 시각에 전화드립니다</div>
+          </div>
+          <div class="mode" data-mode="offline">
+            <div class="ico">🏢</div>
+            <div class="t">오프라인</div>
+            <div class="d">충북대기술지주 사무실</div>
+          </div>
+        </div>
+      </div>
+      <div class="sec" style="border-top:1px solid var(--line)">
+        <h2><span class="n">2</span> 날짜 선택</h2>
+        <div id="days" class="days"><span class="hint">불러오는 중…</span></div>
+      </div>
+      <div class="sec" style="border-top:1px solid var(--line)">
+        <h2><span class="n">3</span> 시간 선택</h2>
+        <div id="slots" class="slots"><span class="hint">먼저 날짜를 선택하세요.</span></div>
+      </div>
+    </div>
+
+    <!-- 우: 신청 정보 -->
+    <div class="card">
+      <div class="sec">
+        <h2><span class="n">4</span> 신청자 정보</h2>
+        <div id="summary" class="summary" style="display:none"></div>
+        <div class="field"><label>이름 <span class="req">*</span></label>
+          <input id="f_name" placeholder="홍길동"></div>
+        <div class="field"><label>소속/회사</label>
+          <input id="f_org" placeholder="○○기업 / ○○부서"></div>
+        <div class="field"><label>이메일 <span class="req">*</span></label>
+          <input id="f_email" type="email" placeholder="name@example.com"></div>
+        <div class="field"><label>연락처 <span id="phoneReq" class="req" style="display:none">*</span></label>
+          <input id="f_phone" placeholder="010-0000-0000"></div>
+        <div class="field"><label>미팅 안건</label>
+          <textarea id="f_topic" rows="3" placeholder="상담하고 싶으신 내용을 적어주세요."></textarea></div>
+
+        <div class="consent">
+          <label class="consent-check">
+            <input type="checkbox" id="f_consent">
+            <span><b>[필수]</b> 개인정보 수집·이용에 동의합니다.</span>
+          </label>
+          <div class="consent-sum">
+            <b>수집목적</b> 미팅 예약 접수·일정 관리 및 안내 연락 ·
+            <b>수집항목</b> 성명, 이메일, 연락처, 소속, 안건 ·
+            <b>보유기간</b> 미팅 종료 후 또는 파기 요청 시까지.<br>
+            동의를 거부하실 권리가 있으나, 거부 시 미팅 예약 접수가 제한됩니다.
+            <a id="ppToggle">개인정보처리방침 전문 보기 ▼</a>
+          </div>
+          <div id="ppFull" class="pp-full" style="display:none">
+            <p class="lead">충북기술지주회사(이하 ‘회사’)는 「개인정보 보호법」 제30조에 의거하여 정보주체의
+              개인정보를 보호하고 관련 고충을 신속·원활하게 처리하기 위하여 다음과 같이
+              「개인정보처리방침」을 수립·공개합니다.</p>
+
+            <h4>제1조 개인정보의 처리목적 및 수집항목</h4>
+            회사는 법령의 규정과 정보주체의 동의에 의해서만 개인정보를 처리하며, 다음 목적 외의 용도로 이용하지 않습니다.
+            <ul>
+              <li>홈페이지 서비스 이용 및 관리 — 항목: 성명, 연락처, 이메일, 접속 IP, 쿠키 등</li>
+              <li>자회사 및 피투자기업 관리 — 항목: 기업명, 임직원 성명·직책·연락처·이메일·소재지 등</li>
+              <li>개인투자조합 결성·운영(GP) — 항목: 출자자 성명, 생년월일, 연락처, 이메일, 주소, 계좌번호 등</li>
+              <li>정부·공공기관 과제 수행 — 항목: 참여 연구원·책임자의 성명, 소속, 직책, 생년월일, 연락처, 이메일 등</li>
+            </ul>
+
+            <h4>제2조 개인정보의 처리 및 보유기간</h4>
+            법령 또는 동의받은 보유·이용기간 내에서 처리·보유합니다. (홈페이지 서비스 이용·관리: 서비스 이용 종료 시
+            또는 파기 요청 시까지 / 세무·회계, 계약 기록 등: 관련 법령상 5년 등)
+
+            <h4>제3조 개인정보의 제3자 제공</h4>
+            제1조 목적 범위에서만 사용하며, 정보주체 동의 없이 제3자에게 제공하지 않습니다.
+            (통계·학술 목적의 비식별 제공, 정부 과제 전담기관 제공, 외부회계감사·세무 대리 제공, 법령상 수사 협조 등은 예외)
+
+            <h4>제4조 개인정보 처리의 위탁</h4>
+            정진회계법인(세무·결산·급여), 외부회계감사인(법정 감사), Notion Labs, Inc.(관리 DB 운영),
+            Google LLC(클라우드 보관·이메일)에 위탁하며, 「개인정보 보호법」 제26조에 따라 관리·감독합니다.
+
+            <h4>제5조 개인정보의 국외 이전</h4>
+            Notion Labs, Inc.(privacy@makenotion.com) 및 Google LLC(googlekrsupport@google.com)에
+            이름·연락처·이메일·소속 등을 미국 등 클라우드 서버로 이전 보관합니다. 정보주체는 국외 이전을 거부할 수 있습니다.
+
+            <h4>제6조 정보주체의 권리·의무 및 행사방법</h4>
+            정보주체는 개인정보 열람·정정·삭제·처리정지를 언제든 서면·전화·이메일·FAX로 요구할 수 있으며,
+            회사는 지체 없이 조치합니다. 대리인을 통한 행사도 가능합니다.
+
+            <h4>제7조 개인정보의 파기</h4>
+            보유기간 경과·처리목적 달성 시 지체 없이 파기합니다. (전자파일: 복구 불가 방식 / 종이: 분쇄·소각)
+
+            <h4>제8조 개인정보의 안전성 확보조치</h4>
+            취급 직원 최소화·교육, 내부관리계획 수립·시행, 개인정보 암호화, 해킹 대비 기술적 대책,
+            접근권한 통제, 문서 잠금장치, 출입 통제 등을 시행합니다.
+
+            <h4>제9조 권익 침해 구제방법</h4>
+            개인정보분쟁조정위원회 1833-6972(kopico.go.kr), 개인정보침해신고센터 118(privacy.kisa.or.kr),
+            대검찰청 1301, 경찰청 182에 분쟁 해결·상담을 신청할 수 있습니다.
+
+            <h4>제10·11조 개인정보 보호책임자 및 열람청구</h4>
+            ▶ 보호책임자: 기술지주회사 대표이사 · 보호담당자: 기업육성부<br>
+            ▶ 연락처: 043-249-1472(1489) / 이메일: cbnuholdings@cbnu.ac.kr<br>
+            개인정보보호 포털(www.privacy.go.kr)을 통해서도 열람청구가 가능합니다.
+
+            <h4>제12조 쿠키의 설치·운영 및 거부</h4>
+            맞춤 서비스 제공을 위해 쿠키를 사용하며, 웹브라우저 옵션에서 저장을 거부할 수 있습니다.
+            (거부 시 맞춤형 서비스 이용에 제한이 있을 수 있습니다.)
+
+            <h4>제13조 추가적인 이용·제공 판단기준</h4>
+            당초 수집 목적과의 관련성, 예측 가능성, 정보주체 이익 침해 여부, 안전성 확보조치 여부를 고려하여 판단합니다.
+          </div>
+        </div>
+
+        <button id="submit" class="btn" disabled>예약하기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 완료 화면 -->
+  <div id="done" class="card done" style="display:none">
+    <div class="check">✓</div>
+    <h2>예약이 확정되었습니다</h2>
+    <p class="hint">확정 안내 메일과 캘린더 초대장을 보내드렸습니다.</p>
+    <div id="doneBox" class="box"></div>
+    <button class="btn" style="max-width:280px;margin:auto" onclick="location.reload()">새 예약하기</button>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* ===== 설정: GAS 웹앱 배포 URL (index.html과 동일) ===== */
+const API_URL = "https://script.google.com/macros/s/AKfycbw6WEsJftAVB-zW1_fHuK3BH-l9dsao2OiiPNsQByFlQQgNctcwaFAzTNRNbZgS8DL_fg/exec";
+/* ==================================================== */
+
+const DOW = ['일','월','화','수','목','금','토'];
+let state = { mode:null, date:null, slot:null };
+
+const $ = s => document.querySelector(s);
+function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2600); }
+
+/* ===== 임베드 높이 자동전달: 부모창(OOPY/노션 등)이 지원 시 iframe 자동 리사이즈. 미지원이어도 무해 ===== */
+function postHeight(){
+  try{
+    const h = Math.ceil(document.documentElement.scrollHeight);
+    parent.postMessage({ type:'embed-size', name:'meeting-booking', height:h }, '*');
+  }catch(e){}
+}
+window.addEventListener('load', postHeight);
+window.addEventListener('resize', postHeight);
+if(window.ResizeObserver){ new ResizeObserver(postHeight).observe(document.body); }
+
+/* 방식 선택 */
+document.querySelectorAll('.mode').forEach(el=>{
+  el.onclick = ()=>{
+    document.querySelectorAll('.mode').forEach(m=>m.classList.remove('sel'));
+    el.classList.add('sel');
+    state.mode = el.dataset.mode;
+    $('#phoneReq').style.display = (state.mode === 'phone') ? 'inline' : 'none';
+    refreshSummary(); validate();
+  };
+});
+
+/* 날짜 목록 로드 */
+async function loadDays(){
+  try{
+    const r = await fetch(API_URL + '?action=days');
+    const j = await r.json();
+    if(!j.ok) throw new Error(j.error||'days error');
+    const box = $('#days'); box.innerHTML='';
+    if(!j.days.length){ box.innerHTML='<span class="hint">예약 가능한 날짜가 없습니다.</span>'; return; }
+    j.days.forEach(d=>{
+      const dt = new Date(d+'T00:00:00+09:00');
+      const el = document.createElement('div');
+      el.className='day';
+      el.innerHTML = `<span class="dow">${DOW[dt.getDay()]}</span>${dt.getMonth()+1}/${dt.getDate()}`;
+      el.onclick = ()=>selectDay(d, el);
+      box.appendChild(el);
+    });
+  }catch(e){ $('#days').innerHTML='<span class="hint">날짜 로드 실패. URL 설정을 확인하세요.</span>'; }
+  postHeight();
+}
+
+async function selectDay(date, el){
+  document.querySelectorAll('.day').forEach(d=>d.classList.remove('sel'));
+  el.classList.add('sel');
+  state.date = date; state.slot = null;
+  $('#slots').innerHTML = '<span class="hint">시간을 불러오는 중…</span>';
+  refreshSummary(); validate();
+  try{
+    const r = await fetch(API_URL + '?action=slots&date=' + date);
+    const j = await r.json();
+    const box = $('#slots'); box.innerHTML='';
+    if(!j.ok || !j.slots.length){ box.innerHTML='<span class="hint">이 날짜에는 가능한 시간이 없습니다.</span>'; return; }
+    j.slots.forEach(s=>{
+      const el2 = document.createElement('div');
+      el2.className='slot'; el2.textContent = s.label;
+      el2.onclick = ()=>{
+        document.querySelectorAll('.slot').forEach(x=>x.classList.remove('sel'));
+        el2.classList.add('sel');
+        state.slot = s; refreshSummary(); validate();
+      };
+      box.appendChild(el2);
+    });
+  }catch(e){ $('#slots').innerHTML='<span class="hint">시간 로드 실패.</span>'; }
+  postHeight();
+}
+
+function refreshSummary(){
+  const s = $('#summary');
+  if(state.mode && state.date && state.slot){
+    const dt = new Date(state.date+'T00:00:00+09:00');
+    s.style.display='block';
+    const modeTxt = {online:'온라인(Meet)', phone:'전화', offline:'오프라인(사무실)'}[state.mode];
+    s.innerHTML = `<b>${dt.getMonth()+1}월 ${dt.getDate()}일(${DOW[dt.getDay()]})</b> `+
+      `${state.slot.label} · <b>${modeTxt}</b>`;
+  } else { s.style.display='none'; }
+  postHeight();
+}
+
+function validate(){
+  const phoneOk = state.mode !== 'phone' || $('#f_phone').value.trim();
+  const consentOk = $('#f_consent').checked;
+  const ok = state.mode && state.date && state.slot &&
+    $('#f_name').value.trim() && /\S+@\S+\.\S+/.test($('#f_email').value.trim()) &&
+    phoneOk && consentOk;
+  $('#submit').disabled = !ok;
+}
+['#f_name','#f_email','#f_org','#f_phone','#f_topic'].forEach(id=>$(id).oninput=validate);
+$('#f_consent').onchange = validate;
+
+/* 개인정보처리방침 전문 토글 */
+$('#ppToggle').onclick = ()=>{
+  const f = $('#ppFull');
+  const show = (f.style.display === 'none');
+  f.style.display = show ? 'block' : 'none';
+  $('#ppToggle').textContent = show ? '개인정보처리방침 닫기 ▲' : '개인정보처리방침 전문 보기 ▼';
+  postHeight();
+};
+
+/* 제출 */
+$('#submit').onclick = async ()=>{
+  const btn = $('#submit');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> 예약 처리 중…';
+  const payload = {
+    name: $('#f_name').value.trim(),
+    org: $('#f_org').value.trim(),
+    email: $('#f_email').value.trim(),
+    phone: $('#f_phone').value.trim(),
+    topic: $('#f_topic').value.trim(),
+    mode: state.mode,
+    start: state.slot.start,
+    end: state.slot.end,
+    consent: $('#f_consent').checked,
+    consentAt: new Date().toISOString()
+  };
+  try{
+    const r = await fetch(API_URL, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'}, // CORS preflight 회피
+      body: JSON.stringify(payload)
+    });
+    const j = await r.json();
+    if(!j.ok){ toast(j.error||'예약 실패'); btn.disabled=false; btn.textContent='예약하기'; return; }
+    showDone(j, payload);
+  }catch(e){ toast('네트워크 오류. 잠시 후 다시 시도해 주세요.'); btn.disabled=false; btn.textContent='예약하기'; }
+};
+
+function showDone(j, p){
+  $('#booking').style.display='none';
+  const box = $('#doneBox');
+  let html = `<div><span class="k">일시</span> ${j.when}</div>`;
+  html += `<div><span class="k">신청자</span> ${p.name}${p.org?' ('+p.org+')':''}</div>`;
+  if(p.mode==='online'){
+    html += `<div><span class="k">방식</span> 온라인 (Google Meet)</div>`;
+    const link = j.meetLink || '';
+    html += `<div><span class="k">링크</span> ` +
+      (link ? `<a href="${link}" target="_blank" rel="noopener">${link}</a>` : `메일을 확인하세요`) + `</div>`;
+  } else if(p.mode==='phone'){
+    html += `<div><span class="k">방식</span> 전화</div>`;
+    html += `<div><span class="k">안내</span> 예약 시각에 ${j.phone||p.phone} 으로 전화드리겠습니다.</div>`;
+  } else {
+    html += `<div><span class="k">방식</span> 오프라인</div>`;
+    html += `<div><span class="k">장소</span> ${j.office}</div>`;
+  }
+  box.innerHTML = html;
+  $('#done').style.display='block';
+  postHeight();
+}
+
+loadDays();
+</script>
+</body>
+</html>
