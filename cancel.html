@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>충북대학교기술지주 — 미팅 예약 취소</title>
+<style>
+  :root{
+    --navy:#1a4b8c; --navy-d:#143a6e; --bg:#f5f7fb; --line:#e3e8ef;
+    --txt:#1f2937; --muted:#6b7280; --ok:#1f9d55; --warn:#c2410c; --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+    font-family:"Apple SD Gothic Neo","Malgun Gothic",sans-serif;line-height:1.55}
+  .wrap{max-width:520px;margin:0 auto;padding:40px 18px 60px}
+  header{text-align:center;margin-bottom:22px}
+  header .brand{color:var(--navy);font-weight:800;letter-spacing:.5px;font-size:14px}
+  header h1{margin:6px 0 4px;font-size:24px}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:0 4px 18px rgba(20,40,80,.05);padding:26px 24px}
+
+  .info{background:#f0f5ff;border:1px solid #d6e2f7;border-radius:11px;
+    padding:16px 18px;margin:18px 0;font-size:14.5px}
+  .info div{margin:5px 0}
+  .info .k{color:var(--muted);width:56px;display:inline-block}
+  .info b{color:var(--navy)}
+
+  .btn{width:100%;background:var(--navy);color:#fff;border:none;border-radius:11px;
+    padding:14px;font-size:15px;font-weight:700;cursor:pointer;transition:.15s;margin-top:6px}
+  .btn:hover{background:var(--navy-d)}
+  .btn:disabled{background:#9fb0cb;cursor:not-allowed}
+  .btn.danger{background:#b91c1c}
+  .btn.danger:hover{background:#991b1b}
+  .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}
+  .btn.ghost:hover{background:#f4f7fb}
+
+  .msg{text-align:center;padding:14px 0}
+  .msg .ico{font-size:44px}
+  .msg h2{margin:8px 0 6px;font-size:19px}
+  .msg p{margin:0;color:var(--muted);font-size:14px}
+  .hint{color:var(--muted);font-size:13px;text-align:center;margin-top:16px}
+  .hint a{color:var(--navy)}
+  .warn{color:var(--warn);font-size:13.5px;text-align:center;margin-top:10px}
+  .spin{display:inline-block;width:16px;height:16px;border:2px solid #fff5;
+    border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-3px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">충북대학교기술지주㈜</div>
+    <h1>미팅 예약 취소</h1>
+  </header>
+
+  <div class="card">
+    <div id="view">
+      <div class="msg"><p>예약 정보를 불러오는 중…</p></div>
+    </div>
+  </div>
+
+  <p class="hint">
+    이 페이지는 확정 안내 메일의 링크로만 열 수 있습니다.<br>
+    문의는 <a href="mailto:cbnuhd@gmail.com">cbnuhd@gmail.com</a> 으로 회신해 주세요.
+  </p>
+</div>
+
+<script>
+/* ===== GAS 웹앱 배포 URL (index.html과 동일) ===== */
+const API_URL = "https://script.google.com/macros/s/AKfycbw6WEsJftAVB-zW1_fHuK3BH-l9dsao2OiiPNsQByFlQQgNctcwaFAzTNRNbZgS8DL_fg/exec";
+const BOOKING_URL = "https://cbnuholdings.github.io/meeting-booking/";
+/* ============================================== */
+
+const $ = s => document.querySelector(s);
+const params = new URLSearchParams(location.search);
+const ID = params.get('id') || '';
+const T  = params.get('t')  || '';
+
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function showError(msg){
+  $('#view').innerHTML =
+    `<div class="msg"><div class="ico">⚠️</div><h2>취소할 수 없습니다</h2><p>${esc(msg)}</p></div>` +
+    `<button class="btn ghost" onclick="location.href='${BOOKING_URL}'">예약 페이지로 이동</button>`;
+}
+
+function showDone(when){
+  $('#view').innerHTML =
+    `<div class="msg"><div class="ico" style="color:var(--ok)">✓</div>` +
+    `<h2>예약이 취소되었습니다</h2>` +
+    `<p>${esc(when)} 미팅이 취소되었습니다.<br>취소 안내 메일이 발송되었습니다.</p></div>` +
+    `<button class="btn" onclick="location.href='${BOOKING_URL}'">다른 시간으로 예약하기</button>`;
+}
+
+function render(j){
+  const cancellable = j.cancellable;
+  $('#view').innerHTML =
+    `<p style="margin:0 0 4px">아래 예약을 취소하시겠습니까?</p>` +
+    `<div class="info">` +
+      `<div><span class="k">일시</span> <b>${esc(j.when)}</b></div>` +
+      `<div><span class="k">방식</span> ${esc(j.mode)}</div>` +
+      `<div><span class="k">신청자</span> ${esc(j.name)}</div>` +
+    `</div>` +
+    (cancellable
+      ? `<button id="go" class="btn danger">예약 취소하기</button>` +
+        `<button class="btn ghost" onclick="location.href='${BOOKING_URL}'">아니요, 유지합니다</button>` +
+        `<p class="hint" style="margin-top:14px">시간을 바꾸시려면 취소하신 뒤 다시 예약해 주세요.</p>`
+      : `<p class="warn">${esc(j.note || '취소할 수 없는 예약입니다.')}</p>` +
+        `<button class="btn ghost" onclick="location.href='${BOOKING_URL}'">예약 페이지로 이동</button>`);
+
+  if (cancellable) $('#go').onclick = doCancel;
+}
+
+async function doCancel(){
+  const btn = $('#go');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> 취소 처리 중…';
+  try{
+    const r = await fetch(API_URL, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},  // CORS preflight 회피
+      body: JSON.stringify({ op:'cancel', id:ID, t:T })
+    });
+    const j = await r.json();
+    if(!j.ok){ showError(j.error || '취소에 실패했습니다.'); return; }
+    showDone(j.when);
+  }catch(e){
+    btn.disabled = false;
+    btn.textContent = '예약 취소하기';
+    showError('네트워크 오류입니다. 잠시 후 다시 시도해 주세요.');
+  }
+}
+
+async function load(){
+  if(!ID || !T){ showError('유효하지 않은 링크입니다.'); return; }
+  try{
+    const r = await fetch(API_URL + '?action=lookup&id=' + encodeURIComponent(ID) + '&t=' + encodeURIComponent(T));
+    const j = await r.json();
+    if(!j.ok){ showError(j.error || '예약을 찾을 수 없습니다.'); return; }
+    render(j);
+  }catch(e){ showError('예약 정보를 불러오지 못했습니다.'); }
+}
+
+load();
+</script>
+</body>
+</html>
