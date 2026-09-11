@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>충북대학교기술지주 — 미팅 예약 이력 (관리자)</title>
+<style>
+  :root{
+    --navy:#1a4b8c; --navy-d:#143a6e; --bg:#f5f7fb; --line:#e3e8ef;
+    --txt:#1f2937; --muted:#6b7280; --ok:#1f9d55; --warn:#c2410c; --bad:#b91c1c; --radius:14px;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  body{margin:0;background:var(--bg);color:var(--txt);
+    font-family:"Apple SD Gothic Neo","Malgun Gothic",sans-serif;line-height:1.55}
+  .wrap{max-width:1180px;margin:0 auto;padding:32px 18px 60px}
+
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+  header .brand{color:var(--navy);font-weight:800;letter-spacing:.5px;font-size:14px}
+  header h1{margin:4px 0 0;font-size:24px}
+  .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:13px}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:0 4px 18px rgba(20,40,80,.05);padding:26px 24px}
+  .narrow{max-width:420px;margin:40px auto 0}
+  label{display:block;font-weight:700;font-size:14px;margin-bottom:6px}
+  input,select{font:inherit;color:inherit;border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;background:#fff;min-width:0}
+  input:focus,select:focus{outline:2px solid #bcd0f0;border-color:var(--navy)}
+  #key{width:100%;margin-bottom:12px}
+
+  .btn{width:100%;background:var(--navy);color:#fff;border:none;border-radius:11px;
+    padding:13px;font-size:15px;font-weight:700;cursor:pointer;transition:.15s}
+  .btn:hover{background:var(--navy-d)}
+  .btn:disabled{background:#9fb0cb;cursor:not-allowed}
+  .btn.sm{width:auto;padding:8px 14px;font-size:13px}
+  .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}
+  .btn.ghost:hover{background:#f4f7fb}
+  .btn.ghost:disabled{color:#9fb0cb}
+
+  .warn{color:var(--warn);font-size:13.5px;margin:10px 0 0;min-height:1em}
+  .hint{color:var(--muted);font-size:13px;margin-top:14px}
+  .notice{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:10px;
+    padding:10px 14px;font-size:13.5px;margin-bottom:12px}
+
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:8px}
+  .tile{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;
+    text-align:left;cursor:pointer;font:inherit;color:inherit}
+  .tile:hover{border-color:#bcd0f0}
+  .tile .n{font-size:24px;font-weight:800;color:var(--navy);line-height:1.2}
+  .tile .l{font-size:13px;color:var(--muted)}
+  .tile.on{border-color:var(--navy);box-shadow:inset 0 0 0 1px var(--navy)}
+  .tile.alert .n{color:var(--bad)}
+  .modes{font-size:13px;color:var(--muted);margin:0 2px 14px}
+
+  .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+  .filters input{flex:1 1 260px}
+  .count{color:var(--muted);font-size:13px;margin-left:auto}
+
+  .tableWrap{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{background:#f4f7fb;color:#374151;font-weight:700;text-align:left;padding:10px 12px;
+    border-bottom:1px solid var(--line);white-space:nowrap}
+  td{padding:11px 12px;border-bottom:1px solid #eef1f5;vertical-align:top}
+  tr.main{cursor:pointer}
+  tr.main:hover td{background:#f8faff}
+  tr.main.open td{background:#f0f5ff}
+  .sub{color:var(--muted);font-size:12.5px}
+  .topic{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+    max-width:340px;color:#374151;word-break:break-word}
+  .nowrap{white-space:nowrap}
+
+  .chip{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px;
+    margin:0 4px 3px 0;white-space:nowrap}
+  .c-blue{background:#e8f0fe;color:#1a4b8c}
+  .c-green{background:#e6f6ec;color:#17803f}
+  .c-amber{background:#fff4e0;color:#a15c00}
+  .c-gray{background:#eef0f3;color:#4b5563}
+  .c-red{background:#fde8e8;color:#b91c1c}
+
+  tr.detail td{background:#fbfcfe;padding:16px 18px 18px}
+  .dl{display:grid;grid-template-columns:110px 1fr;gap:7px 14px;font-size:14px;margin:0}
+  .dl dt{color:var(--muted)}
+  .dl dd{margin:0;word-break:break-word}
+  .pre{white-space:pre-wrap}
+  .dl a{color:var(--navy);font-weight:700;text-decoration:none;margin-right:14px}
+  .dl a:hover{text-decoration:underline}
+  .empty{text-align:center;color:var(--muted);padding:40px 0}
+
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid #fff5;
+    border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+  .btn.ghost .spin{border-color:#1a4b8c33;border-top-color:var(--navy)}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  @media (max-width:760px){
+    .wrap{padding:22px 14px 50px}
+    .count{margin-left:0}
+    thead{display:none}
+    table,tbody,tr,td{display:block;width:100%}
+    tr.main{border-bottom:1px solid var(--line);padding:10px 0}
+    tr.main td{border:none;padding:3px 14px}
+    tr.main td::before{content:attr(data-label);display:inline-block;width:56px;
+      color:var(--muted);font-size:12.5px}
+    tr.main td .sub{padding-left:56px}
+    .topic{max-width:none}
+    .dl{grid-template-columns:84px 1fr}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="brand">충북대학교기술지주㈜ · 관리자</div>
+      <h1>미팅 예약 이력</h1>
+    </div>
+    <div class="tools" id="tools" hidden>
+      <span id="generated"></span>
+      <button class="btn ghost sm" id="refresh" type="button">새로고침</button>
+      <button class="btn ghost sm" id="lock" type="button">잠그기</button>
+    </div>
+  </header>
+
+  <section class="card narrow" id="login">
+    <form id="loginForm">
+      <!-- 브라우저 비밀번호 관리자가 키를 저장·자동입력할 수 있도록 사용자명 칸을 둔다 -->
+      <input type="text" name="username" value="meeting-booking-admin" autocomplete="username" hidden>
+      <label for="key">관리자 키</label>
+      <input id="key" name="password" type="password" autocomplete="current-password" maxlength="200" required>
+      <button class="btn" id="loginBtn" type="submit">조회</button>
+      <p class="warn" id="loginErr" role="alert"></p>
+    </form>
+    <p class="hint">
+      관리자 키는 GAS 편집기에서 <code>issueAdminKey</code> 를 실행해 발급합니다.<br>
+      키는 이 화면에만 들고 있으며, 새로고침하거나 창을 닫으면 다시 입력해야 합니다.
+    </p>
+  </section>
+
+  <section id="dash" hidden>
+    <div id="warnings"></div>
+    <div class="tiles" id="tiles"></div>
+    <div class="modes" id="modes"></div>
+
+    <div class="filters">
+      <input id="q" type="search" placeholder="이름·소속·이메일·연락처·안건 검색" aria-label="검색">
+      <select id="fStatus" aria-label="상태">
+        <option value="all">전체 상태</option>
+        <option value="upcoming">예정</option>
+        <option value="past">지난 미팅</option>
+        <option value="cancel">취소</option>
+        <option value="check">확인 필요</option>
+        <option value="purged">파기됨</option>
+      </select>
+      <select id="fMode" aria-label="방식">
+        <option value="all">전체 방식</option>
+        <option value="온라인">온라인</option>
+        <option value="전화">전화</option>
+        <option value="오프라인">오프라인</option>
+      </select>
+      <span class="count" id="count"></span>
+    </div>
+
+    <div class="tableWrap">
+      <table>
+        <thead>
+          <tr><th>예약일시</th><th>신청자 · 소속</th><th>연락처 · 이메일</th><th>방식</th><th>안건</th><th>상태</th></tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <p class="hint">
+      행을 누르면 안건 전문과 접수·동의·보유기한이 펼쳐집니다.
+      개인정보 화면이므로 공용 PC에서는 사용 후 「잠그기」를 눌러 주세요.
+    </p>
+  </section>
+</div>
+
+<script>
+/* ===== GAS 웹앱 배포 URL (index.html과 동일) ===== */
+const API_URL = "https://script.google.com/macros/s/AKfycbw6WEsJftAVB-zW1_fHuK3BH-l9dsao2OiiPNsQByFlQQgNctcwaFAzTNRNbZgS8DL_fg/exec";
+/* ============================================== */
+
+const $ = s => document.querySelector(s);
+const DOW = ['일','월','화','수','목','금','토'];
+const KST = 9 * 60 * 60 * 1000;
+
+// 키는 메모리에만 둔다. 같은 github.io 출처의 다른 페이지가 저장소를 읽을 여지를 남기지 않는다.
+let KEY = '';
+let ROWS = [];
+const OPEN = new Set();
+
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+const pad = n => ('0' + n).slice(-2);
+
+// 표시 시각은 브라우저 시간대와 무관하게 KST로 고정
+function kst(iso){
+  const t = Date.parse(iso);
+  return isNaN(t) ? null : new Date(t + KST);
+}
+function fmtDay(iso){
+  const k = kst(iso);
+  if (!k) return '-';
+  return `${k.getUTCFullYear()}-${pad(k.getUTCMonth()+1)}-${pad(k.getUTCDate())}(${DOW[k.getUTCDay()]})`;
+}
+function fmtHm(iso){
+  const k = kst(iso);
+  return k ? `${pad(k.getUTCHours())}:${pad(k.getUTCMinutes())}` : '';
+}
+function fmtFull(iso){
+  return kst(iso) ? `${fmtDay(iso)} ${fmtHm(iso)}` : '-';
+}
+function fmtRange(start, end){
+  const s = fmtHm(start), e = fmtHm(end);
+  return s ? (e && e !== s ? `${s} ~ ${e}` : s) : '';
+}
+
+function chip(text, color){ return `<span class="chip c-${color}">${esc(text)}</span>`; }
+
+/* ---------- 데이터 가공 ---------- */
+function enrich(r, i){
+  const now = Date.now();
+  const start = Date.parse(r.date);
+  const end = Date.parse(r.dateEnd) || (isNaN(start) ? NaN : start + 60 * 60 * 1000);
+  const past = !isNaN(end) && end < now;
+  const kind = r.status === '취소' ? 'cancel' : (past ? 'past' : 'upcoming');
+  const flag = r.source === 'calendar' ? 'notInLedger'
+             : (r.calendar === 'missing' ? 'notInCalendar' : '');
+  return Object.assign({}, r, {
+    _i: i, past, kind, flag,
+    hay: [r.name, r.org, r.email, r.phone, r.topic].join(' ').toLowerCase(),
+    digits: String(r.phone || '').replace(/[^0-9]/g, '')
+  });
+}
+
+function statusChips(r){
+  let h;
+  if (r.status === '취소') h = chip('취소', 'gray');
+  else if (r.status === '노쇼') h = chip('노쇼', 'red');
+  else if (r.status === '완료') h = chip('완료', 'green');
+  else if (r.past) h = chip('지남 · 결과 미기록', 'amber');
+  else h = chip('예정', 'blue');
+  if (r.purged) h += chip('파기됨', 'gray');
+  if (r.flag === 'notInLedger') h += chip('대장 누락', 'red');
+  if (r.flag === 'notInCalendar') h += chip('캘린더에 없음', 'red');
+  if (r.source === 'ledger' && r.calendar === 'unchecked' && r.status !== '취소') h += chip('캘린더 미확인', 'gray');
+  return h;
+}
+
+function reconcileText(r){
+  if (r.source === 'calendar')
+    return chip('대장 누락', 'red') + ' 캘린더에는 있으나 노션 예약 대장에 기록이 없습니다. ' +
+           '자동 파기는 대장을 기준으로 돌기 때문에, 대장에 추가하지 않으면 보유기한이 지나도 파기되지 않습니다.';
+  if (r.calendar === 'missing')
+    return chip('캘린더에 없음', 'red') + ' 대장에는 있으나 캘린더에서 찾지 못했습니다. ' +
+           '캘린더에서 직접 지운 예약이라면 대장 상태를 「취소」로 바꿔 주세요.';
+  if (r.status === '취소') return '취소된 예약 — 캘린더에서 제거되어 대조하지 않습니다.';
+  if (r.calendar === 'ok') return '대장과 캘린더에 모두 기록되어 있습니다.';
+  return '캘린더 조회에 실패해 대조하지 못했습니다.';
+}
+
+/* ---------- 화면 ---------- */
+function renderTiles(){
+  const n = k => ROWS.filter(r => r.kind === k).length;
+  const check = ROWS.filter(r => r.flag).length;
+  const st = $('#fStatus').value;
+  const tiles = [
+    ['all', '전체', ROWS.length],
+    ['upcoming', '예정', n('upcoming')],
+    ['past', '지난 미팅', n('past')],
+    ['cancel', '취소', n('cancel')],
+    ['check', '확인 필요', check]
+  ];
+  $('#tiles').innerHTML = tiles.map(([k, l, v]) =>
+    `<button type="button" class="tile${st === k ? ' on' : ''}${k === 'check' && v ? ' alert' : ''}" data-f="${k}">` +
+    `<div class="n">${v}</div><div class="l">${l}</div></button>`).join('');
+
+  const live = ROWS.filter(r => r.kind !== 'cancel');
+  const m = k => live.filter(r => r.mode === k).length;
+  $('#modes').textContent = `취소 제외 방식별 — 온라인 ${m('온라인')} · 전화 ${m('전화')} · 오프라인 ${m('오프라인')}`;
+}
+
+function rowHtml(r){
+  const open = OPEN.has(r._i);
+  return `<tr class="main${open ? ' open' : ''}" data-i="${r._i}">` +
+    `<td data-label="일시" class="nowrap"><b>${fmtDay(r.date)}</b><div class="sub">${fmtRange(r.date, r.dateEnd)}</div></td>` +
+    `<td data-label="신청자"><b>${esc(r.name || '-')}</b><div class="sub">${esc(r.org || '소속 미기재')}</div></td>` +
+    `<td data-label="연락처">${esc(r.phone || '-')}<div class="sub">${esc(r.email || '-')}</div></td>` +
+    `<td data-label="방식" class="nowrap">${esc(r.mode || '-')}</td>` +
+    `<td data-label="안건"><div class="topic">${esc(r.topic || '-')}</div></td>` +
+    `<td data-label="상태">${statusChips(r)}</td>` +
+    `</tr>` + (open ? detailHtml(r) : '');
+}
+
+function detailHtml(r){
+  const items = [];
+  const add = (k, v) => items.push(`<dt>${k}</dt><dd>${v}</dd>`);
+
+  add('안건', `<div class="pre">${esc(r.topic || '-')}</div>`);
+  add('예약일시', `${fmtDay(r.date)} ${fmtRange(r.date, r.dateEnd)}`);
+
+  const contact = [];
+  const digits = String(r.phone || '').replace(/[^0-9]/g, '');
+  if (digits) contact.push(`<a href="tel:${digits}">전화 ${esc(r.phone)}</a>`);
+  if (r.email) contact.push(`<a href="mailto:${esc(r.email)}">메일 ${esc(r.email)}</a>`);
+  add('연락', contact.join('') || '-');
+
+  if (/^https:\/\/meet\.google\.com\//.test(r.meetLink || ''))
+    add('Meet 링크', `<a href="${esc(r.meetLink)}" target="_blank" rel="noopener noreferrer">${esc(r.meetLink)}</a>`);
+
+  add('접수일시', fmtFull(r.received));
+  add('동의일시', fmtFull(r.consentAt));
+  if (r.keepUntil) add('보유기한', fmtDay(r.keepUntil));
+  if (r.purged)
+    add('개인정보 파기', (r.purgedAt ? fmtFull(r.purgedAt) : '파기됨') +
+        (r.archiveFile ? ` · 아카이브 ${esc(r.archiveFile)}` : ''));
+  add('기록 대조', reconcileText(r));
+
+  const links = [];
+  if (/^[0-9a-f-]{32,36}$/i.test(r.pageId || ''))
+    links.push(`<a href="https://www.notion.so/${r.pageId.replace(/-/g, '')}" target="_blank" rel="noopener noreferrer">노션 대장 열기</a>`);
+  if (/^https:\/\/www\.google\.com\/calendar\//.test(r.calLink || ''))
+    links.push(`<a href="${esc(r.calLink)}" target="_blank" rel="noopener noreferrer">캘린더 일정 열기</a>`);
+  if (links.length) add('바로가기', links.join(''));
+
+  return `<tr class="detail"><td colspan="6"><dl class="dl">${items.join('')}</dl></td></tr>`;
+}
+
+function render(){
+  const q = $('#q').value.trim().toLowerCase();
+  const qd = q.replace(/[^0-9]/g, '');
+  const st = $('#fStatus').value;
+  const md = $('#fMode').value;
+
+  const list = ROWS.filter(r =>
+    (st === 'all' || (st === 'check' ? !!r.flag : st === 'purged' ? r.purged : r.kind === st)) &&
+    (md === 'all' || r.mode === md) &&
+    (!q || r.hay.includes(q) || (qd.length >= 3 && r.digits.includes(qd)))
+  );
+
+  renderTiles();
+  $('#count').textContent = `${list.length}건 표시 / 전체 ${ROWS.length}건`;
+  $('#rows').innerHTML = list.length
+    ? list.map(rowHtml).join('')
+    : `<tr><td colspan="6" class="empty">조건에 맞는 예약이 없습니다.</td></tr>`;
+}
+
+function showLogin(msg){
+  $('#dash').hidden = true;
+  $('#tools').hidden = true;
+  $('#login').hidden = false;
+  $('#loginErr').textContent = msg || '';
+  $('#key').focus();
+}
+
+/* ---------- 서버 ---------- */
+async function load(key, btn){
+  const label = btn.textContent;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> 불러오는 중…';
+  try{
+    const r = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },  // CORS preflight 회피
+      body: JSON.stringify({ op: 'admin_list', key })
+    });
+    const j = await r.json();
+    if (!j.ok){
+      let msg = j.error || '조회에 실패했습니다.';
+      // 백엔드가 아직 이전 버전이면 op를 모르고 예약 검증으로 흘러 이 문구가 돌아온다
+      if (/^필수 항목 누락/.test(msg)) msg = '서버에 관리자 조회 기능이 아직 배포되지 않았습니다. GAS 새 버전 배포가 필요합니다.';
+      KEY = ''; ROWS = []; OPEN.clear();
+      $('#rows').innerHTML = '';
+      showLogin(msg);
+      return;
+    }
+    KEY = key;
+    $('#key').value = '';
+    ROWS = (j.rows || []).map(enrich);
+    $('#warnings').innerHTML = (j.warnings || []).map(w => `<div class="notice">${esc(w)}</div>`).join('');
+    $('#generated').textContent = j.generatedAt ? `${j.generatedAt} 기준` : '';
+    $('#login').hidden = true;
+    $('#dash').hidden = false;
+    $('#tools').hidden = false;
+    render();
+  }catch(e){
+    if (KEY) $('#warnings').innerHTML = `<div class="notice">서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.</div>`;
+    else showLogin('서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = label;
+  }
+}
+
+$('#loginForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const key = $('#key').value.trim();
+  if (key) load(key, $('#loginBtn'));
+});
+$('#refresh').addEventListener('click', () => { if (KEY) load(KEY, $('#refresh')); });
+$('#lock').addEventListener('click', () => {
+  KEY = ''; ROWS = []; OPEN.clear();
+  $('#rows').innerHTML = '';
+  $('#warnings').innerHTML = '';
+  showLogin('');
+});
+$('#q').addEventListener('input', render);
+$('#fStatus').addEventListener('change', render);
+$('#fMode').addEventListener('change', render);
+$('#tiles').addEventListener('click', e => {
+  const t = e.target.closest('.tile');
+  if (!t) return;
+  $('#fStatus').value = t.dataset.f;
+  render();
+});
+$('#rows').addEventListener('click', e => {
+  const tr = e.target.closest('tr.main');
+  if (!tr) return;
+  const i = Number(tr.dataset.i);
+  OPEN.has(i) ? OPEN.delete(i) : OPEN.add(i);
+  render();
+});
+</script>
+</body>
+</html>
