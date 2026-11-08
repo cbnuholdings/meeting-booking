@@ -393,6 +393,11 @@ function detailHtml(r){
   if (/^https:\/\/www\.google\.com\/calendar\//.test(r.calLink || ''))
     links.push(`<a href="${esc(r.calLink)}" target="_blank" rel="noopener noreferrer">캘린더 일정 열기</a>`);
   if (links.length) add('바로가기', links.join(''));
+  if (r.eventId)
+    add('예약 삭제', `<button type="button" class="btn ghost sm del" data-del="${esc(r.eventId)}">예약 취소(삭제)</button>` +
+      `<div class="sub" style="margin-top:6px">캘린더 일정·노션 대장·업무 일정을 함께 지웁니다.` +
+      (r.past ? ' 지난 미팅이라 신청자에게 알림은 가지 않습니다.' : ' 예정 미팅이면 신청자에게 캘린더 취소 알림이 갑니다.') +
+      ` 노션 기록은 휴지통에서 30일 안에 되살릴 수 있습니다.</div>`);
 
   return `<tr class="detail"><td colspan="6"><dl class="dl">${items.join('')}</dl></td></tr>`;
 }
@@ -609,7 +614,41 @@ $('#tiles').addEventListener('click', e => {
   $('#fStatus').value = t.dataset.f;
   render();
 });
-$('#rows').addEventListener('click', e => {
+$('#rows').addEventListener('click', async e => {
+  const del = e.target.closest('[data-del]');
+  if (del){
+    // 브라우저 대화상자 대신 두 번 누르게 한다
+    if (del.dataset.armed !== '1'){
+      del.dataset.armed = '1'; del.textContent = '한 번 더 누르면 삭제됩니다';
+      setTimeout(() => { if (del.isConnected){ del.dataset.armed = ''; del.textContent = '예약 취소(삭제)'; } }, 4000);
+      return;
+    }
+    del.disabled = true; del.innerHTML = '<span class="spin"></span> 삭제 중…';
+    try{
+      const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ op: 'admin_delete', key: KEY, eventId: del.dataset.del }) });
+      const j = await r.json();
+      if (!j.ok){
+        if (/관리자 키|잠겼습니다/.test(j.error || '')){ KEY = ''; showLogin(j.error); return; }
+        $('#warnings').innerHTML = `<div class="notice">${esc(/^필수 항목 누락/.test(j.error || '')
+          ? '서버에 삭제 기능이 아직 배포되지 않았습니다.' : (j.error || '삭제하지 못했습니다.'))}</div>`;
+        del.disabled = false; del.dataset.armed = ''; del.textContent = '예약 취소(삭제)';
+        return;
+      }
+      const W = { removed: '삭제', missing: '이미 없음', none: '기록 없음', skip: '해당 없음', failed: '실패' };
+      const msg = `예약을 삭제했습니다 — 캘린더 ${W[j.calendar]} · 노션 대장 ${W[j.ledger]} · 업무 일정 ${W[j.schedule]}`;
+      const bad = j.ledger === 'failed' || j.schedule === 'failed';
+      $('#warnings').innerHTML = `<div class="notice"${bad ? '' : ' style="background:#ecfdf3;border-color:#bbf7d0;color:#166534"'}>${esc(msg)}${bad ? ' · 실패한 항목은 노션에서 직접 지워 주세요.' : ''}</div>`;
+      const gone = ROWS.find(x => x.eventId === del.dataset.del);
+      if (gone) OPEN.delete(gone._i);
+      ROWS = ROWS.filter(x => x.eventId !== del.dataset.del);
+      render();
+    }catch(err){
+      $('#warnings').innerHTML = `<div class="notice">서버에 연결하지 못했습니다. 새로고침 후 상태를 확인해 주세요.</div>`;
+      del.disabled = false; del.dataset.armed = ''; del.textContent = '예약 취소(삭제)';
+    }
+    return;
+  }
   const tr = e.target.closest('tr.main');
   if (!tr) return;
   const i = Number(tr.dataset.i);
