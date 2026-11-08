@@ -94,8 +94,31 @@
   .btn.ghost .spin{border-color:#1a4b8c33;border-top-color:var(--navy)}
   @keyframes sp{to{transform:rotate(360deg)}}
 
+  /* 탭 */
+  .tabs{display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--line)}
+  .tab{background:none;border:none;font:inherit;font-weight:700;color:var(--muted);padding:10px 14px;
+    cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px}
+  .tab.on{color:var(--navy);border-bottom-color:var(--navy)}
+
+  /* 초대 링크 */
+  .invForm{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;align-items:end}
+  .invForm .f label{font-size:13px;margin-bottom:5px}
+  .invForm .f input,.invForm .f select{width:100%}
+  .invForm .chk{display:flex;gap:8px;align-items:center;font-size:14px;font-weight:600;margin:0}
+  .invForm .chk input{width:17px;height:17px;accent-color:var(--navy)}
+  .issued{margin-top:16px;background:#f0f5ff;border:1px solid #d6e2f7;border-radius:12px;padding:14px 16px}
+  .issued .url{display:flex;gap:8px;margin-top:8px}
+  .issued .url input{flex:1;font-size:13px}
+  .copyBtn{white-space:nowrap}
+  td .mini{font-size:12.5px;padding:5px 10px;width:auto}
+  .rule{font-size:13px;color:var(--muted);margin:12px 2px 0}
+
   @media (max-width:760px){
     .wrap{padding:22px 14px 50px}
+    #invTable thead{display:none}
+    #invTable tr{border-bottom:1px solid var(--line);padding:8px 0;display:block}
+    #invTable td{border:none;padding:3px 14px}
+    #invTable td::before{content:attr(data-label);display:inline-block;width:56px;color:var(--muted);font-size:12.5px}
     .count{margin-left:0}
     thead{display:none}
     table,tbody,tr,td{display:block;width:100%}
@@ -139,6 +162,41 @@
   </section>
 
   <section id="dash" hidden>
+    <div class="tabs" role="tablist">
+      <button type="button" class="tab on" data-tab="history" role="tab">예약 이력</button>
+      <button type="button" class="tab" data-tab="invite" role="tab">초대 링크</button>
+    </div>
+
+    <div id="tabInvite" hidden>
+      <div class="card" style="margin-bottom:16px">
+        <form id="invForm" class="invForm" autocomplete="off">
+          <div class="f"><label for="iOrg">기업명</label><input id="iOrg" maxlength="60" placeholder="○○㈜"></div>
+          <div class="f"><label for="iName">이름 *</label><input id="iName" maxlength="40" required placeholder="홍길동"></div>
+          <div class="f"><label for="iEmail">이메일 *</label><input id="iEmail" type="email" maxlength="100" required placeholder="name@example.com"></div>
+          <div class="f"><label for="iMonth">대상 달</label><select id="iMonth"></select></div>
+          <div class="f"><label for="iMax">예약 횟수</label><input id="iMax" type="number" min="1" max="10" value="3"></div>
+          <div class="f"><label class="chk"><input type="checkbox" id="iMail"> 초대 메일 보내기</label></div>
+          <div class="f"><button class="btn" id="iBtn" type="submit">링크 발급</button></div>
+        </form>
+        <p class="warn" id="iErr" role="alert"></p>
+        <div id="issued" class="issued" hidden></div>
+        <p class="rule">초대받은 분은 대상 달 안에서 평일 09~19시 · 토·일 13~17시(공휴일 제외)의 빈 시간을 60분 단위로 예약합니다.
+          먼저 예약한 사람이 그 시간을 가져가며, 공개 예약 화면에서도 같은 시각이 닫힙니다.</p>
+      </div>
+      <div class="filters">
+        <span class="count" id="invCount"></span>
+        <button class="btn ghost sm" id="invRefresh" type="button">목록 새로고침</button>
+      </div>
+      <div class="tableWrap">
+        <table id="invTable">
+          <thead><tr><th>발급일</th><th>기업 · 이름</th><th>이메일</th><th>대상 달</th><th>사용</th><th>상태</th><th></th></tr></thead>
+          <tbody id="invRows"><tr><td colspan="7" class="empty">불러오는 중…</td></tr></tbody>
+        </table>
+      </div>
+      <p class="hint">회수하면 그 링크로는 더 예약할 수 없습니다. 이미 잡힌 예약은 그대로 남으니, 필요하면 예약 이력에서 따로 취소해 주세요.</p>
+    </div>
+
+    <div id="tabHistory">
     <div id="warnings"></div>
     <div class="tiles" id="tiles"></div>
     <div class="modes" id="modes"></div>
@@ -159,6 +217,11 @@
         <option value="전화">전화</option>
         <option value="오프라인">오프라인</option>
       </select>
+      <select id="fKind" aria-label="구분">
+        <option value="all">공개 + 초대</option>
+        <option value="공개">공개 예약</option>
+        <option value="초대">초대 예약</option>
+      </select>
       <span class="count" id="count"></span>
     </div>
 
@@ -174,6 +237,7 @@
       행을 누르면 안건 전문과 접수·동의·보유기한이 펼쳐집니다.
       개인정보 화면이므로 공용 PC에서는 사용 후 「잠그기」를 눌러 주세요.
     </p>
+    </div>
   </section>
 </div>
 
@@ -233,6 +297,7 @@ function enrich(r, i){
              : (r.calendar === 'missing' ? 'notInCalendar' : '');
   return Object.assign({}, r, {
     _i: i, past, kind, flag,
+    src: r.kind === '초대' ? '초대' : '공개',   // 서버의 구분(공개/초대). kind는 아래에서 예정/지남/취소로 쓴다
     hay: [r.name, r.org, r.email, r.phone, r.topic].join(' ').toLowerCase(),
     digits: String(r.phone || '').replace(/[^0-9]/g, '')
   });
@@ -245,6 +310,7 @@ function statusChips(r){
   else if (r.status === '완료') h = chip('완료', 'green');
   else if (r.past) h = chip('지남 · 결과 미기록', 'amber');
   else h = chip('예정', 'blue');
+  if (r.src === '초대') h += chip('초대', 'green');
   if (r.purged) h += chip('파기됨', 'gray');
   if (r.flag === 'notInLedger') h += chip('대장 누락', 'red');
   if (r.flag === 'notInCalendar') h += chip('캘린더에 없음', 'red');
@@ -336,10 +402,12 @@ function render(){
   const qd = q.replace(/[^0-9]/g, '');
   const st = $('#fStatus').value;
   const md = $('#fMode').value;
+  const kd = $('#fKind').value;
 
   const list = ROWS.filter(r =>
     (st === 'all' || (st === 'check' ? !!r.flag : st === 'purged' ? r.purged : r.kind === st)) &&
     (md === 'all' || r.mode === md) &&
+    (kd === 'all' || r.src === kd) &&
     (!q || r.hay.includes(q) || (qd.length >= 3 && r.digits.includes(qd)))
   );
 
@@ -404,11 +472,134 @@ $('#loginForm').addEventListener('submit', e => {
 });
 $('#refresh').addEventListener('click', () => { if (KEY) load(KEY, $('#refresh')); });
 $('#lock').addEventListener('click', () => {
-  KEY = ''; ROWS = []; OPEN.clear();
+  KEY = ''; ROWS = []; OPEN.clear(); INV = []; invLoaded = false;
   $('#rows').innerHTML = '';
   $('#warnings').innerHTML = '';
+  $('#invRows').innerHTML = '';
+  $('#issued').hidden = true; $('#issued').innerHTML = '';
   showLogin('');
 });
+$('#fKind').addEventListener('change', render);
+
+/* ---------- 초대 링크 ---------- */
+let INV = [], invLoaded = false;
+
+async function api(body){
+  const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                                   body: JSON.stringify(Object.assign({ key: KEY }, body)) });
+  return r.json();
+}
+// 서버가 아직 이전 버전이면 op를 몰라 예약 검증 문구가 돌아온다
+function notDeployed(j){ return /^필수 항목 누락/.test((j && j.error) || ''); }
+function authLost(j){ return /관리자 키|잠겼습니다/.test((j && j.error) || ''); }
+
+function monthOptions(){
+  const k = new Date(Date.now() + KST);
+  let y = k.getUTCFullYear(), m = k.getUTCMonth() + 1;
+  const out = [];
+  for (let i = 0; i <= 3; i++){
+    out.push(`<option value="${y}-${pad(m)}"${i === 1 ? ' selected' : ''}>${y}년 ${m}월</option>`);
+    if (++m > 12){ m = 1; y++; }
+  }
+  $('#iMonth').innerHTML = out.join('');
+}
+
+function showTab(t){
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  $('#tabHistory').hidden = t !== 'history';
+  $('#tabInvite').hidden = t !== 'invite';
+  if (t === 'invite' && !invLoaded) loadInvites();
+}
+document.querySelector('.tabs').addEventListener('click', e => {
+  const b = e.target.closest('.tab'); if (b) showTab(b.dataset.tab);
+});
+
+const ST = { valid: ['유효', 'blue'], revoked: ['회수됨', 'gray'], expired: ['만료', 'gray'] };
+function invRowHtml(v){
+  const used = v.used == null ? '?' : v.used;
+  return `<tr>` +
+    `<td data-label="발급" class="nowrap">${fmtDay(v.createdAt)}</td>` +
+    `<td data-label="대상"><b>${esc(v.name)}</b><div class="sub">${esc(v.org || '소속 미기재')}</div></td>` +
+    `<td data-label="이메일">${esc(v.email)}${v.mailedAt ? '<div class="sub">초대 메일 발송</div>' : ''}</td>` +
+    `<td data-label="달" class="nowrap">${esc(v.month)}</td>` +
+    `<td data-label="사용" class="nowrap">${used} / ${v.max}</td>` +
+    `<td data-label="상태">${chip(ST[v.status][0], ST[v.status][1])}</td>` +
+    `<td class="nowrap">` + (v.status === 'valid'
+      ? `<button class="btn ghost sm mini" data-copy="${esc(v.url)}" type="button">링크 복사</button> ` +
+        `<button class="btn ghost sm mini" data-revoke="${esc(v.id)}" data-name="${esc(v.name)}" type="button">회수</button>`
+      : '') + `</td></tr>`;
+}
+function renderInvites(){
+  $('#invCount').textContent = `발급 ${INV.length}건 · 유효 ${INV.filter(v => v.status === 'valid').length}건`;
+  $('#invRows').innerHTML = INV.length ? INV.map(invRowHtml).join('')
+    : `<tr><td colspan="7" class="empty">발급한 초대 링크가 없습니다.</td></tr>`;
+}
+async function loadInvites(){
+  const btn = $('#invRefresh'); btn.disabled = true;
+  try{
+    const j = await api({ op: 'admin_invite_list' });
+    if (!j.ok){
+      if (authLost(j)){ KEY = ''; showLogin(j.error); return; }
+      $('#invRows').innerHTML = `<tr><td colspan="7" class="empty">${esc(notDeployed(j)
+        ? '서버에 초대 기능이 아직 배포되지 않았습니다. GAS 새 버전 배포가 필요합니다.' : (j.error || '불러오지 못했습니다.'))}</td></tr>`;
+      return;
+    }
+    INV = j.rows || []; invLoaded = true; renderInvites();
+  }catch(e){
+    $('#invRows').innerHTML = `<tr><td colspan="7" class="empty">서버에 연결하지 못했습니다.</td></tr>`;
+  }finally{ btn.disabled = false; }
+}
+async function copyText(t, btn){
+  try{ await navigator.clipboard.writeText(t); }
+  catch(e){ const x = document.createElement('textarea'); x.value = t; document.body.appendChild(x); x.select();
+            document.execCommand('copy'); x.remove(); }
+  if (btn){ const l = btn.textContent; btn.textContent = '복사됨'; setTimeout(() => btn.textContent = l, 1500); }
+}
+
+$('#invForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = $('#iBtn'); $('#iErr').textContent = '';
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> 발급 중…';
+  try{
+    const j = await api({ op: 'admin_invite_create', org: $('#iOrg').value.trim(), name: $('#iName').value.trim(),
+      email: $('#iEmail').value.trim(), month: $('#iMonth').value, max: Number($('#iMax').value), sendMail: $('#iMail').checked });
+    if (!j.ok){
+      if (authLost(j)){ KEY = ''; showLogin(j.error); return; }
+      $('#iErr').textContent = notDeployed(j) ? '서버에 초대 기능이 아직 배포되지 않았습니다.' : (j.error || '발급하지 못했습니다.');
+      return;
+    }
+    const v = j.invite;
+    $('#issued').innerHTML =
+      `<b>${esc(v.name)}</b>${v.org ? ' (' + esc(v.org) + ')' : ''} · ${esc(v.month)} · 최대 ${v.max}회 — 발급 완료` +
+      (j.mailed ? ' · 초대 메일을 보냈습니다.' : '') +
+      (j.mailError ? `<div class="warn">${esc(j.mailError)}</div>` : '') +
+      `<div class="url"><input readonly value="${esc(j.url)}" aria-label="초대 링크">` +
+      `<button class="btn sm copyBtn" type="button" data-copy="${esc(j.url)}">링크 복사</button></div>`;
+    $('#issued').hidden = false;
+    $('#iOrg').value = ''; $('#iName').value = ''; $('#iEmail').value = ''; $('#iMax').value = 3; $('#iMail').checked = false;
+    INV.unshift(Object.assign({}, v, { used: 0 })); renderInvites();
+  }catch(e){ $('#iErr').textContent = '서버에 연결하지 못했습니다.'; }
+  finally{ btn.disabled = false; btn.textContent = '링크 발급'; }
+});
+$('#tabInvite').addEventListener('click', async e => {
+  const c = e.target.closest('[data-copy]');
+  if (c){ copyText(c.dataset.copy, c); return; }
+  const r = e.target.closest('[data-revoke]');
+  if (!r) return;
+  // 브라우저 대화상자 대신 버튼을 두 번 누르게 한다
+  if (r.dataset.armed !== '1'){ r.dataset.armed = '1'; r.textContent = '한 번 더 눌러 회수';
+    setTimeout(() => { if (r.isConnected){ r.dataset.armed = ''; r.textContent = '회수'; } }, 4000); return; }
+  r.disabled = true;
+  try{
+    const j = await api({ op: 'admin_invite_revoke', id: r.dataset.revoke });
+    if (!j.ok){ if (authLost(j)){ KEY = ''; showLogin(j.error); return; } $('#iErr').textContent = j.error || '회수하지 못했습니다.'; r.disabled = false; return; }
+    const v = INV.find(x => x.id === j.invite.id);
+    if (v){ v.status = 'revoked'; v.revokedAt = j.invite.revokedAt; v.url = ''; }
+    renderInvites();
+  }catch(err){ $('#iErr').textContent = '서버에 연결하지 못했습니다.'; r.disabled = false; }
+});
+$('#invRefresh').addEventListener('click', () => { if (KEY) loadInvites(); });
+monthOptions();
 $('#q').addEventListener('input', render);
 $('#fStatus').addEventListener('change', render);
 $('#fMode').addEventListener('change', render);
